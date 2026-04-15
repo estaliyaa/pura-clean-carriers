@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TANBA — Реестр импорта</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } }
+  </script>
+  <style>
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease-out forwards; opacity: 0; }
+    .sidebar { transition: width 0.25s ease; }
+    .sidebar-label { transition: opacity 0.15s ease, width 0.15s ease; white-space: nowrap; }
+    .sidebar.collapsed { width: 76px; }
+    .sidebar.collapsed .sidebar-label { opacity: 0; width: 0; overflow: hidden; }
+    .sidebar.collapsed .sidebar-section-title { opacity: 0; height: 0; margin: 0; padding: 0; overflow: hidden; }
+    .sidebar.collapsed .sidebar-user-info { display: none; }
+    .sidebar.collapsed .logo-full { display: none; }
+    .sidebar.collapsed .logo-icon { display: flex; }
+    .sidebar:not(.collapsed) .logo-icon { display: none; }
+    .sidebar.collapsed .sidebar-header { justify-content: center; padding: 0; }
+    .sidebar.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+    .sidebar.collapsed #sidebarUserBtn { justify-content: center; }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; border-radius: 10px; font-size: 13.5px;
+      font-weight: 500; color: #475569;
+      transition: background 0.15s, color 0.15s;
+      width: 100%;
+    }
+    .nav-item:hover { background: #f1f5f9; color: #0f172a; }
+    .nav-item.active { background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25); }
+    .nav-item.active:hover { color: white; }
+
+    .sidebar-toggle-float {
+      position: absolute; top: 20px; right: -12px; width: 24px; height: 24px;
+      background: white; border: 1px solid #e2e8f0; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 50; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      transition: all 0.2s ease; opacity: 0;
+    }
+    .sidebar:hover .sidebar-toggle-float,
+    .sidebar-toggle-float:hover { opacity: 1; }
+    .sidebar-toggle-float:hover { background: #f1f5f9; transform: scale(1.1); }
+
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+
+    .tooltip-right { position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%);
+      background: #0f172a; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px;
+      white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s; z-index: 50; }
+    .sidebar.collapsed .nav-item:hover .tooltip-right { opacity: 1; }
+    .sidebar:not(.collapsed) .tooltip-right { display: none; }
+
+    /* Status chips */
+    .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+    .chip-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+    .chip-notify   { background: #eff6ff; color: #1d4ed8; } .chip-notify .chip-dot   { background: #3b82f6; }
+    .chip-head     { background: #f5f3ff; color: #6d28d9; } .chip-head .chip-dot     { background: #8b5cf6; }
+    .chip-refine   { background: #fffbeb; color: #b45309; } .chip-refine .chip-dot   { background: #f59e0b; }
+    .chip-sent     { background: #f0f9ff; color: #0369a1; } .chip-sent .chip-dot     { background: #0ea5e9; }
+    .chip-appeal   { background: #fdf2f8; color: #be185d; } .chip-appeal .chip-dot   { background: #ec4899; }
+    .chip-paid     { background: #ecfdf5; color: #047857; } .chip-paid .chip-dot     { background: #10b981; }
+    .chip-overdue  { background: #fef2f2; color: #b91c1c; } .chip-overdue .chip-dot  { background: #ef4444; }
+
+    /* Filter tabs */
+    .filter-tab { padding: 6px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 500; color: #64748b; transition: all 0.15s; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+    .filter-tab:hover { background: #f1f5f9; color: #0f172a; }
+    .filter-tab.active { background: #0f172a; color: white; }
+    .filter-tab .count { background: rgba(148, 163, 184, 0.25); color: inherit; padding: 1px 6px; border-radius: 10px; font-size: 10.5px; font-weight: 600; }
+    .filter-tab.active .count { background: rgba(255,255,255,0.22); color: white; }
+
+    /* SLA indicator */
+    .sla-bar { height: 3px; border-radius: 2px; background: #e2e8f0; overflow: hidden; margin-top: 4px; }
+    .sla-bar > div { height: 100%; border-radius: 2px; transition: width 0.3s; }
+
+    /* Chat bubbles */
+    .msg-in  { background: #f1f5f9; color: #0f172a; border-radius: 14px 14px 14px 4px; }
+    .msg-out { background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; border-radius: 14px 14px 4px 14px; }
+  </style>
+</head>
+<body class="font-sans bg-slate-50 min-h-screen flex">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside id="sidebar" class="sidebar w-[260px] bg-white border-r border-slate-200 flex flex-col fixed inset-y-0 left-0 z-40">
+    <button id="toggleSidebar" class="sidebar-toggle-float">
+      <i data-lucide="chevron-left" id="toggleIcon" class="w-3.5 h-3.5 text-slate-500"></i>
+    </button>
+
+    <div class="sidebar-header h-16 flex items-center px-5 border-b border-slate-200 shrink-0">
+      <a href="index.html" class="logo-full flex items-center gap-2.5">
+        <img src="../logo.svg" alt="" class="w-8 h-8">
+        <div>
+          <div class="font-bold text-slate-900 tracking-tight leading-none">TANBA</div>
+          <div class="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">Чистые носители</div>
+        </div>
+      </a>
+      <a href="index.html" class="logo-icon items-center justify-center hidden">
+        <img src="../logo.svg" alt="" class="w-8 h-8">
+      </a>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto scrollbar-thin px-3 py-4">
+      <div class="sidebar-section-title text-[10.5px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">Модули</div>
+      <div class="space-y-1">
+        <a href="index.html" class="nav-item relative">
+          <i data-lucide="layout-dashboard" class="w-[18px] h-[18px] shrink-0"></i>
+          <span class="sidebar-label">Центр аналитики</span>
+          <span class="tooltip-right">Центр аналитики</span>
+        </a>
+        <a href="import-registry.html" class="nav-item active relative">
+          <i data-lucide="package-search" class="w-[18px] h-[18px] shrink-0"></i>
+          <span class="sidebar-label">Реестр импорта</span>
+          <span class="tooltip-right">Реестр импорта</span>
+        </a>
+        <a href="#" class="nav-item relative">
+          <i data-lucide="wallet" class="w-[18px] h-[18px] shrink-0"></i>
+          <span class="sidebar-label">Платежи</span>
+          <span class="tooltip-right">Платежи</span>
+        </a>
+        <a href="#" class="nav-item relative">
+          <i data-lucide="file-signature" class="w-[18px] h-[18px] shrink-0"></i>
+          <span class="sidebar-label">Договоры</span>
+          <span class="tooltip-right">Договоры</span>
+        </a>
+        <a href="#" class="nav-item relative">
+          <i data-lucide="file-bar-chart-2" class="w-[18px] h-[18px] shrink-0"></i>
+          <span class="sidebar-label">Отчёты</span>
+          <span class="tooltip-right">Отчёты</span>
+        </a>
+        <a href="#" class="nav-item relative">
+          <i data-lucide="calculator" class="w-[18px] h-[18px] shrink-0"></i>
+          <span class="sidebar-label">Калькулятор</span>
+          <span class="tooltip-right">Калькулятор</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="border-t border-slate-200 p-3 shrink-0">
+      <div class="relative">
+        <button id="sidebarUserBtn" class="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-slate-50 transition-colors">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center text-[12px] font-bold shrink-0 shadow-sm">АЕ</div>
+          <div class="sidebar-user-info text-left min-w-0 flex-1">
+            <p class="text-[13px] font-semibold text-slate-900 truncate">Айдана Ермекова</p>
+            <p class="text-[11px] text-slate-500 truncate">Эксперт НИИС</p>
+          </div>
+          <i data-lucide="chevron-up" class="w-4 h-4 text-slate-400 shrink-0 sidebar-label"></i>
+        </button>
+        <div id="sidebarDropdown" class="hidden absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-xl shadow-slate-300/40 border border-slate-200 py-2 z-50 overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center text-[13px] font-bold shrink-0">АЕ</div>
+              <div class="min-w-0">
+                <p class="text-[13px] font-semibold text-slate-900 truncate">Айдана Ермекова</p>
+                <p class="text-[11px] text-slate-500 truncate">aermekova@niis.kz</p>
+              </div>
+            </div>
+            <div class="mt-3 flex items-center gap-2">
+              <span class="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-wide">Эксперт НИИС</span>
+              <span class="text-[10px] text-slate-500">ID: EX-0142</span>
+            </div>
+          </div>
+          <button class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"><i data-lucide="user" class="w-4 h-4 text-slate-400"></i> Мой профиль</button>
+          <button class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"><i data-lucide="settings" class="w-4 h-4 text-slate-400"></i> Настройки</button>
+          <button class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"><i data-lucide="life-buoy" class="w-4 h-4 text-slate-400"></i> Поддержка</button>
+          <div class="border-t border-slate-100 my-1"></div>
+          <a href="../login.html" class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-red-600 hover:bg-red-50 transition-colors"><i data-lucide="log-out" class="w-4 h-4"></i> Выйти из системы</a>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div id="mainArea" class="flex-1 ml-[260px] transition-all duration-250">
+
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-20 h-16 flex items-center px-6 justify-between">
+      <div>
+        <div class="flex items-center gap-2 text-[12px] text-slate-400 mb-0.5">
+          <i data-lucide="home" class="w-3 h-3"></i>
+          <span>НИИС</span>
+          <i data-lucide="chevron-right" class="w-3 h-3"></i>
+          <span>Реестр импорта</span>
+        </div>
+        <h1 class="text-[17px] font-bold text-slate-900 leading-tight">Реестр импорта</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="relative hidden md:block">
+          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+          <input type="text" placeholder="Поиск по ГТД, БИН, товару..." class="w-72 pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[13px] placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100 transition-all">
+        </div>
+        <button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 relative transition-colors">
+          <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
+          <span class="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
+        </button>
+        <span class="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700">
+          <i data-lucide="shield-check" class="w-3 h-3"></i> Эксперт НИИС
+        </span>
+      </div>
+    </header>
+
+    <main class="p-6">
+      <!-- Greeting / subheader -->
+      <div class="flex items-start justify-between mb-5 fade-in">
+        <div>
+          <h2 class="text-[22px] font-bold text-slate-900 mb-1">Реестр импорта</h2>
+          <p class="text-[13.5px] text-slate-500">Таможенные декларации и расчёт вознаграждения по чистым носителям</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Синхронизация ГТД
+          </button>
+          <button class="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Экспорт
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══ Summary KPIs ═══ -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6 fade-in">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><i data-lucide="package" class="w-5 h-5"></i></div>
+            <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">+12%</span>
+          </div>
+          <p class="text-[22px] font-bold text-slate-900 leading-tight">1 248 316</p>
+          <p class="text-[12px] text-slate-500 mt-0.5">Единиц товара</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center"><i data-lucide="truck" class="w-5 h-5"></i></div>
+            <span class="text-[10px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full">184 активных</span>
+          </div>
+          <p class="text-[22px] font-bold text-slate-900 leading-tight">312</p>
+          <p class="text-[12px] text-slate-500 mt-0.5">Импортёров в системе</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i data-lucide="coins" class="w-5 h-5"></i></div>
+            <span class="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">KZT</span>
+          </div>
+          <p class="text-[22px] font-bold text-slate-900 leading-tight">42.3 млрд</p>
+          <p class="text-[12px] text-slate-500 mt-0.5">Таможенная стоимость</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-5 text-white shadow-lg shadow-indigo-500/20 relative overflow-hidden">
+          <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10"></div>
+          <div class="relative">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center"><i data-lucide="receipt" class="w-5 h-5"></i></div>
+              <span class="text-[10px] font-semibold bg-white/20 px-2 py-0.5 rounded-full">1% от стоимости</span>
+            </div>
+            <p class="text-[22px] font-bold leading-tight">423 180 000 ₸</p>
+            <p class="text-[12px] opacity-85 mt-0.5">Ожидаемое вознаграждение</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ Table card ═══ -->
+      <section class="bg-white rounded-2xl border border-slate-200 overflow-hidden fade-in">
+
+        <!-- Status filter tabs -->
+        <div class="px-5 pt-4 pb-3 border-b border-slate-100">
+          <div class="flex items-center gap-1 overflow-x-auto scrollbar-thin pb-1" id="filterTabs">
+            <button class="filter-tab active" data-filter="all">Все <span class="count">48</span></button>
+            <div class="w-px h-5 bg-slate-200 mx-1"></div>
+            <button class="filter-tab" data-filter="notify"><span class="chip-dot" style="background:#3b82f6"></span> Нужно сформировать уведомление <span class="count">7</span></button>
+            <button class="filter-tab" data-filter="head"><span class="chip-dot" style="background:#8b5cf6"></span> На рассмотрении у руководителя <span class="count">4</span></button>
+            <button class="filter-tab" data-filter="refine"><span class="chip-dot" style="background:#f59e0b"></span> На доработку <span class="count">3</span></button>
+            <button class="filter-tab" data-filter="sent"><span class="chip-dot" style="background:#0ea5e9"></span> Отправлено <span class="count">12</span></button>
+            <button class="filter-tab" data-filter="appeal"><span class="chip-dot" style="background:#ec4899"></span> На обжаловании <span class="count">2</span></button>
+            <button class="filter-tab" data-filter="paid"><span class="chip-dot" style="background:#10b981"></span> Оплачено <span class="count">18</span></button>
+            <button class="filter-tab" data-filter="overdue"><span class="chip-dot" style="background:#ef4444"></span> Просрочено <span class="count">2</span></button>
+          </div>
+        </div>
+
+        <!-- Secondary filter row -->
+        <div class="px-5 py-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50">
+          <div class="relative flex-1 max-w-sm">
+            <i data-lucide="search" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"></i>
+            <input type="text" placeholder="Поиск по ГТД, импортёру, товару..." class="w-full pl-8 pr-3 py-1.5 text-[12.5px] bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100">
+          </div>
+          <button class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Период
+          </button>
+          <button class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
+            <i data-lucide="globe" class="w-3.5 h-3.5"></i> Страна
+          </button>
+          <button class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50">
+            <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Ещё фильтры
+          </button>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto scrollbar-thin">
+          <table class="w-full text-[13px]">
+            <thead>
+              <tr class="bg-slate-50/70 text-[10.5px] font-semibold text-slate-500 uppercase tracking-wider">
+                <th class="text-left px-5 py-3 w-10"><input type="checkbox" class="rounded border-slate-300 accent-indigo-600"></th>
+                <th class="text-left px-3 py-3">ГТД</th>
+                <th class="text-left px-3 py-3">Импортёр</th>
+                <th class="text-left px-3 py-3">Дата ввоза</th>
+                <th class="text-left px-3 py-3">Страна</th>
+                <th class="text-left px-3 py-3">Товар / ID БКТ</th>
+                <th class="text-right px-3 py-3">Кол-во</th>
+                <th class="text-right px-3 py-3">Там. стоимость</th>
+                <th class="text-right px-3 py-3">Вознаграждение</th>
+                <th class="text-left px-3 py-3">Статус / SLA</th>
+                <th class="text-right px-4 py-3 w-32">Действие</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100" id="importTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="px-5 py-3 border-t border-slate-100 flex items-center justify-between text-[12px] text-slate-500">
+          <span>Показано 1–10 из 48</span>
+          <div class="flex items-center gap-1">
+            <button class="w-7 h-7 rounded-md hover:bg-slate-100 flex items-center justify-center opacity-40 cursor-not-allowed"><i data-lucide="chevron-left" class="w-3.5 h-3.5"></i></button>
+            <button class="w-7 h-7 rounded-md bg-indigo-600 text-white text-[11px] font-semibold">1</button>
+            <button class="w-7 h-7 rounded-md hover:bg-slate-100 text-[11px] font-medium text-slate-600">2</button>
+            <button class="w-7 h-7 rounded-md hover:bg-slate-100 text-[11px] font-medium text-slate-600">3</button>
+            <button class="w-7 h-7 rounded-md hover:bg-slate-100 text-[11px] font-medium text-slate-600">4</button>
+            <button class="w-7 h-7 rounded-md hover:bg-slate-100 text-[11px] font-medium text-slate-600">5</button>
+            <button class="w-7 h-7 rounded-md hover:bg-slate-100 flex items-center justify-center"><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ═══ CHAT MODAL ═══ -->
+  <div id="chatModal" class="hidden fixed inset-0 z-50 items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeChat()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col overflow-hidden">
+
+      <!-- Chat header -->
+      <div class="flex items-start justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-rose-500 text-white flex items-center justify-center font-bold shrink-0">ИГ</div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="text-[15px] font-bold text-slate-900 truncate" id="chatCompany">ТОО «Импорт Групп»</h3>
+              <span class="chip chip-appeal"><span class="chip-dot"></span> На обжаловании</span>
+            </div>
+            <p class="text-[11.5px] text-slate-500 truncate" id="chatDoc">ГТД №25840/120426/001842 · БИН 090140001234</p>
+          </div>
+        </div>
+        <button onclick="closeChat()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Chat body -->
+      <div class="flex-1 overflow-y-auto scrollbar-thin p-5 space-y-3 bg-slate-50/30" id="chatBody">
+        <div class="flex justify-center">
+          <span class="text-[10.5px] text-slate-400 bg-white border border-slate-200 px-2.5 py-1 rounded-full">12 апреля 2026</span>
+        </div>
+
+        <div class="flex gap-2.5 items-end">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-rose-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0">ИГ</div>
+          <div class="max-w-[75%]">
+            <div class="msg-in px-3.5 py-2.5 text-[13px] leading-snug">
+              Здравствуйте. Не согласны с расчётом вознаграждения по декларации №25840/120426/001842. По нашему мнению, товар не относится к категории чистых носителей согласно перечню.
+            </div>
+            <div class="text-[10.5px] text-slate-400 mt-1 px-1">10:24</div>
+          </div>
+        </div>
+
+        <div class="flex gap-2.5 items-end">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-rose-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0">ИГ</div>
+          <div class="max-w-[75%]">
+            <div class="msg-in px-3.5 py-2.5 text-[13px] leading-snug">
+              Прикладываем техническую документацию на товар для рассмотрения.
+            </div>
+            <div class="flex items-center gap-2 mt-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg max-w-[260px] cursor-pointer hover:border-indigo-300">
+              <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center"><i data-lucide="file-text" class="w-4 h-4"></i></div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[12px] font-medium text-slate-900 truncate">Тех.спецификация.pdf</div>
+                <div class="text-[10.5px] text-slate-500">1.2 МБ</div>
+              </div>
+              <i data-lucide="download" class="w-3.5 h-3.5 text-slate-400"></i>
+            </div>
+            <div class="text-[10.5px] text-slate-400 mt-1 px-1">10:27</div>
+          </div>
+        </div>
+
+        <div class="flex gap-2.5 items-end justify-end">
+          <div class="max-w-[75%]">
+            <div class="msg-out px-3.5 py-2.5 text-[13px] leading-snug">
+              Добрый день! Документы получены, направили на экспертизу. Ответ предоставим в течение 3 рабочих дней согласно регламенту.
+            </div>
+            <div class="text-[10.5px] text-slate-400 mt-1 px-1 text-right flex items-center justify-end gap-1">
+              <span>11:02</span>
+              <i data-lucide="check-check" class="w-3.5 h-3.5 text-indigo-500"></i>
+            </div>
+          </div>
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0">АЕ</div>
+        </div>
+
+        <div class="flex justify-center">
+          <span class="text-[10.5px] text-slate-400 bg-white border border-slate-200 px-2.5 py-1 rounded-full">Сегодня</span>
+        </div>
+
+        <div class="flex gap-2.5 items-end">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-rose-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0">ИГ</div>
+          <div class="max-w-[75%]">
+            <div class="msg-in px-3.5 py-2.5 text-[13px] leading-snug">
+              Какие-то обновления по нашему обращению? Срок уже поджимает.
+            </div>
+            <div class="text-[10.5px] text-slate-400 mt-1 px-1">09:15</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat input -->
+      <div class="border-t border-slate-100 p-3 bg-white">
+        <div class="flex items-end gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2 focus-within:border-indigo-300 focus-within:ring-4 focus-within:ring-indigo-100 transition-all">
+          <button class="w-8 h-8 rounded-lg hover:bg-white flex items-center justify-center text-slate-500 shrink-0"><i data-lucide="paperclip" class="w-4 h-4"></i></button>
+          <textarea rows="1" placeholder="Напишите сообщение..." class="flex-1 bg-transparent resize-none text-[13px] placeholder:text-slate-400 focus:outline-none py-1.5 max-h-32"></textarea>
+          <button class="w-8 h-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center text-white shrink-0 shadow-sm">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+        <div class="flex items-center justify-between mt-2 px-1">
+          <span class="text-[10.5px] text-slate-400">Сообщение фиксируется в истории декларации</span>
+          <span class="text-[10.5px] text-slate-400">⌘ + Enter — отправить</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // Sidebar collapse
+    const sidebar = document.getElementById('sidebar');
+    const mainArea = document.getElementById('mainArea');
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const toggleIcon = document.getElementById('toggleIcon');
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      const c = sidebar.classList.contains('collapsed');
+      mainArea.classList.toggle('ml-[260px]', !c);
+      mainArea.classList.toggle('ml-[76px]', c);
+      toggleIcon.setAttribute('data-lucide', c ? 'chevron-right' : 'chevron-left');
+      lucide.createIcons();
+    });
+
+    // User dropdown
+    const userBtn = document.getElementById('sidebarUserBtn');
+    const dropdown = document.getElementById('sidebarDropdown');
+    userBtn.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('hidden'); });
+    document.addEventListener('click', e => { if (!dropdown.contains(e.target) && !userBtn.contains(e.target)) dropdown.classList.add('hidden'); });
+
+    // Filter tabs
+    document.querySelectorAll('#filterTabs .filter-tab').forEach(t => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('#filterTabs .filter-tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+      });
+    });
+
+    // Import rows
+    const ROWS = [
+      { gtd: '25840/120426/001842', importer: 'ТОО «Импорт Групп»', bin: '090140001234', date: '12.04.2026', country: 'Китай', flag: '🇨🇳', goods: 'USB Flash 32GB', bkt: 'BKT-2847', units: 12400, value: 31200000, fee: 312000, status: 'appeal', slaLeft: 3, slaTotal: 10 },
+      { gtd: '25840/110426/001798', importer: 'ИП «Алтынбеков»', bin: '820420301234', date: '11.04.2026', country: 'Германия', flag: '🇩🇪', goods: 'Внешние HDD 1TB', bkt: 'BKT-1920', units: 840, value: 18600000, fee: 186000, status: 'notify', slaLeft: 7, slaTotal: 10 },
+      { gtd: '25840/100426/001756', importer: 'ТОО «ElectroWorld»', bin: '060140002145', date: '10.04.2026', country: 'Южная Корея', flag: '🇰🇷', goods: 'SD-карты 64GB', bkt: 'BKT-3141', units: 24000, value: 42000000, fee: 420000, status: 'head', slaLeft: 2, slaTotal: 5 },
+      { gtd: '25840/080426/001702', importer: 'ТОО «Технологии Алматы»', bin: '180540008721', date: '08.04.2026', country: 'Турция', flag: '🇹🇷', goods: 'Смартфоны (встр. память)', bkt: 'BKT-4502', units: 2100, value: 168000000, fee: 1680000, status: 'sent', slaLeft: 14, slaTotal: 20 },
+      { gtd: '25840/050426/001654', importer: 'АО «ЦифраПлюс»', bin: '010540009999', date: '05.04.2026', country: 'Япония', flag: '🇯🇵', goods: 'Планшеты 256GB', bkt: 'BKT-5120', units: 980, value: 245000000, fee: 2450000, status: 'paid', slaLeft: null, slaTotal: null },
+      { gtd: '25840/020426/001603', importer: 'ТОО «Импорт Групп»', bin: '090140001234', date: '02.04.2026', country: 'Китай', flag: '🇨🇳', goods: 'MicroSD 128GB', bkt: 'BKT-2912', units: 34000, value: 51000000, fee: 510000, status: 'refine', slaLeft: 5, slaTotal: 7 },
+      { gtd: '25840/280326/001548', importer: 'ТОО «AstanaTrade»', bin: '130240003214', date: '28.03.2026', country: 'США', flag: '🇺🇸', goods: 'Ноутбуки SSD 512GB', bkt: 'BKT-6710', units: 420, value: 189000000, fee: 1890000, status: 'paid', slaLeft: null, slaTotal: null },
+      { gtd: '25840/220326/001482', importer: 'ИП «Токтаров»', bin: '780105304567', date: '22.03.2026', country: 'Китай', flag: '🇨🇳', goods: 'USB Flash 16GB', bkt: 'BKT-2801', units: 18000, value: 27000000, fee: 270000, status: 'overdue', slaLeft: -4, slaTotal: 10 },
+      { gtd: '25840/180326/001421', importer: 'ТОО «MegaDigital»', bin: '200340005678', date: '18.03.2026', country: 'Малайзия', flag: '🇲🇾', goods: 'Внешние SSD 2TB', bkt: 'BKT-7230', units: 360, value: 108000000, fee: 1080000, status: 'sent', slaLeft: 10, slaTotal: 20 },
+      { gtd: '25840/150326/001387', importer: 'ТОО «Карагандинский импорт»', bin: '150640007890', date: '15.03.2026', country: 'Россия', flag: '🇷🇺', goods: 'DVD-диски (пустые)', bkt: 'BKT-1050', units: 96000, value: 14400000, fee: 144000, status: 'overdue', slaLeft: -1, slaTotal: 10 }
+    ];
+
+    const STATUS_MAP = {
+      notify:   { label: 'Нужно сформировать уведомление', class: 'chip chip-notify', btn: { label: 'Сформировать', icon: 'file-plus' } },
+      head:     { label: 'На рассмотрении у руководителя',  class: 'chip chip-head',   btn: { label: 'Просмотр', icon: 'eye' } },
+      refine:   { label: 'На доработку',                     class: 'chip chip-refine', btn: { label: 'Доработать', icon: 'pencil' } },
+      sent:     { label: 'Отправлено',                       class: 'chip chip-sent',   btn: { label: 'Просмотр', icon: 'eye' } },
+      appeal:   { label: 'На обжаловании',                   class: 'chip chip-appeal', btn: { label: 'Ответить', icon: 'message-circle', action: 'chat' } },
+      paid:     { label: 'Оплачено',                         class: 'chip chip-paid',   btn: { label: 'Просмотр', icon: 'eye' } },
+      overdue:  { label: 'Просрочено',                       class: 'chip chip-overdue', btn: { label: 'Просмотр', icon: 'eye' } }
+    };
+
+    const fmt = n => n.toLocaleString('ru-RU') + ' ₸';
+    const fmtNum = n => n.toLocaleString('ru-RU');
+
+    const slaHtml = (left, total) => {
+      if (left === null) return '<div class="text-[10.5px] text-slate-400 mt-1 flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Завершено</div>';
+      if (left < 0) {
+        return `<div class="text-[10.5px] text-red-600 mt-1 flex items-center gap-1 font-semibold"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Просрочено на ${Math.abs(left)} д.</div>
+                <div class="sla-bar"><div style="width:100%; background:#ef4444"></div></div>`;
+      }
+      const pct = Math.max(8, (left / total) * 100);
+      const color = left <= 2 ? '#ef4444' : left <= 5 ? '#f59e0b' : '#10b981';
+      const textColor = left <= 2 ? 'text-red-600' : left <= 5 ? 'text-amber-600' : 'text-emerald-600';
+      return `<div class="text-[10.5px] ${textColor} mt-1 flex items-center gap-1 font-medium"><i data-lucide="timer" class="w-3 h-3"></i> Осталось ${left} д. из ${total}</div>
+              <div class="sla-bar"><div style="width:${pct}%; background:${color}"></div></div>`;
+    };
+
+    const tbody = document.getElementById('importTableBody');
+    ROWS.forEach((r, i) => {
+      const st = STATUS_MAP[r.status];
+      const btnClass = r.status === 'notify'
+        ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+        : r.status === 'appeal'
+        ? 'bg-pink-600 hover:bg-pink-700 text-white'
+        : r.status === 'refine'
+        ? 'bg-amber-500 hover:bg-amber-600 text-white'
+        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50';
+
+      const onclick = st.btn.action === 'chat' ? `onclick="openChat(${i})"` : '';
+
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr class="hover:bg-slate-50/60 transition-colors">
+          <td class="px-5 py-3.5"><input type="checkbox" class="rounded border-slate-300 accent-indigo-600"></td>
+          <td class="px-3 py-3.5">
+            <div class="font-mono text-[12px] font-medium text-slate-900">${r.gtd}</div>
+            <div class="text-[10.5px] text-slate-400 mt-0.5">ГТД</div>
+          </td>
+          <td class="px-3 py-3.5">
+            <a href="https://pk.adata.kz/company/${r.bin}" target="_blank" class="group flex items-center gap-2">
+              <div>
+                <div class="text-[12.5px] font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">${r.importer}</div>
+                <div class="text-[10.5px] text-slate-400 font-mono">БИН ${r.bin}</div>
+              </div>
+              <i data-lucide="external-link" class="w-3 h-3 text-slate-300 group-hover:text-indigo-500 transition-colors"></i>
+            </a>
+          </td>
+          <td class="px-3 py-3.5 text-[12.5px] text-slate-700 whitespace-nowrap">${r.date}</td>
+          <td class="px-3 py-3.5 text-[12.5px] text-slate-700 whitespace-nowrap"><span class="mr-1">${r.flag}</span>${r.country}</td>
+          <td class="px-3 py-3.5">
+            <div class="text-[12.5px] font-medium text-slate-900">${r.goods}</div>
+            <div class="text-[10.5px] text-slate-400 font-mono">${r.bkt}</div>
+          </td>
+          <td class="px-3 py-3.5 text-right tabular-nums text-[12.5px] text-slate-700">${fmtNum(r.units)}</td>
+          <td class="px-3 py-3.5 text-right tabular-nums text-[12.5px] text-slate-700">${fmt(r.value)}</td>
+          <td class="px-3 py-3.5 text-right tabular-nums text-[12.5px] font-semibold text-indigo-700">${fmt(r.fee)}</td>
+          <td class="px-3 py-3.5">
+            <span class="${st.class}"><span class="chip-dot"></span> ${st.label}</span>
+            ${slaHtml(r.slaLeft, r.slaTotal)}
+          </td>
+          <td class="px-4 py-3.5 text-right">
+            <button class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium ${btnClass} transition-colors" ${onclick}>
+              <i data-lucide="${st.btn.icon}" class="w-3 h-3"></i> ${st.btn.label}
+            </button>
+          </td>
+        </tr>
+      `);
+    });
+    lucide.createIcons();
+
+    // Chat modal
+    function openChat(i) {
+      const r = ROWS[i];
+      document.getElementById('chatCompany').textContent = r.importer;
+      document.getElementById('chatDoc').textContent = `ГТД №${r.gtd} · БИН ${r.bin}`;
+      const m = document.getElementById('chatModal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+      lucide.createIcons();
+    }
+    function closeChat() {
+      const m = document.getElementById('chatModal');
+      m.classList.add('hidden'); m.classList.remove('flex');
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeChat(); });
+  </script>
+</body>
+</html>
