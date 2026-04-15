@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TANBA — Центр аналитики</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } }
+  </script>
+  <style>
+    body { background: #fafaf9; }
+    .sidebar { transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+    .sidebar-label { transition: opacity 0.15s ease; }
+    .sidebar.collapsed { width: 64px; }
+    .sidebar.collapsed .sidebar-label,
+    .sidebar.collapsed .sidebar-brand-text,
+    .sidebar.collapsed .sidebar-section-title,
+    .sidebar.collapsed .sidebar-footer-text { opacity: 0; pointer-events: none; }
+    .sidebar.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+    .sidebar.collapsed .nav-item .chevron { display: none; }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; border-radius: 8px; font-size: 13.5px;
+      color: #475569; font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-item:hover { background: #f1f5f9; color: #0f172a; }
+    .nav-item.active { background: #0f172a; color: white; }
+    .nav-item.active:hover { background: #0f172a; color: white; }
+
+    .tooltip { position: absolute; left: calc(100% + 12px); top: 50%; transform: translateY(-50%);
+      background: #0f172a; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px;
+      white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s; z-index: 50; }
+    .sidebar.collapsed .nav-item:hover .tooltip { opacity: 1; }
+    .sidebar:not(.collapsed) .tooltip { display: none; }
+
+    /* Hide scrollbar but allow scroll */
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+
+    /* KPI card sparkline */
+    .spark { stroke: currentColor; fill: none; stroke-width: 1.5; }
+  </style>
+</head>
+<body class="font-sans text-slate-900">
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar w-[240px] bg-white border-r border-slate-200 flex flex-col shrink-0">
+      <!-- Brand -->
+      <div class="h-14 flex items-center px-4 border-b border-slate-200 shrink-0">
+        <a href="#" class="flex items-center gap-2.5">
+          <img src="../logo.svg" alt="" class="w-7 h-7 shrink-0">
+          <span class="sidebar-brand-text font-bold text-slate-900 tracking-tight">TANBA</span>
+        </a>
+      </div>
+
+      <!-- Nav -->
+      <nav class="flex-1 overflow-y-auto scrollbar-thin px-3 py-4">
+        <div class="sidebar-section-title text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">Модули</div>
+        <ul class="space-y-0.5">
+          <li><a href="#" class="nav-item active relative">
+            <i data-lucide="layout-dashboard" class="w-[18px] h-[18px] shrink-0"></i>
+            <span class="sidebar-label flex-1">Центр аналитики</span>
+            <span class="tooltip">Центр аналитики</span>
+          </a></li>
+          <li><a href="#" class="nav-item relative">
+            <i data-lucide="package-search" class="w-[18px] h-[18px] shrink-0"></i>
+            <span class="sidebar-label flex-1">Реестр импорта</span>
+            <span class="tooltip">Реестр импорта</span>
+          </a></li>
+          <li><a href="#" class="nav-item relative">
+            <i data-lucide="wallet" class="w-[18px] h-[18px] shrink-0"></i>
+            <span class="sidebar-label flex-1">Платежи</span>
+            <span class="tooltip">Платежи</span>
+          </a></li>
+          <li><a href="#" class="nav-item relative">
+            <i data-lucide="file-signature" class="w-[18px] h-[18px] shrink-0"></i>
+            <span class="sidebar-label flex-1">Договоры</span>
+            <span class="tooltip">Договоры</span>
+          </a></li>
+          <li><a href="#" class="nav-item relative">
+            <i data-lucide="file-bar-chart-2" class="w-[18px] h-[18px] shrink-0"></i>
+            <span class="sidebar-label flex-1">Отчёты</span>
+            <span class="tooltip">Отчёты</span>
+          </a></li>
+          <li><a href="#" class="nav-item relative">
+            <i data-lucide="calculator" class="w-[18px] h-[18px] shrink-0"></i>
+            <span class="sidebar-label flex-1">Калькулятор</span>
+            <span class="tooltip">Калькулятор</span>
+          </a></li>
+        </ul>
+      </nav>
+
+      <!-- Footer: collapse toggle + support -->
+      <div class="border-t border-slate-200 p-3 space-y-0.5 shrink-0">
+        <a href="#" class="nav-item relative">
+          <i data-lucide="life-buoy" class="w-[18px] h-[18px] shrink-0"></i>
+          <span class="sidebar-label flex-1">Поддержка</span>
+          <span class="tooltip">Поддержка</span>
+        </a>
+        <a href="#" class="nav-item relative">
+          <i data-lucide="settings" class="w-[18px] h-[18px] shrink-0"></i>
+          <span class="sidebar-label flex-1">Настройки</span>
+          <span class="tooltip">Настройки</span>
+        </a>
+        <button id="collapseBtn" class="nav-item relative w-full">
+          <i data-lucide="panel-left-close" id="collapseIcon" class="w-[18px] h-[18px] shrink-0"></i>
+          <span class="sidebar-label flex-1 text-left">Свернуть</span>
+          <span class="tooltip">Развернуть</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main area -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- Header -->
+      <header class="h-14 bg-white border-b border-slate-200 flex items-center px-6 gap-4 shrink-0">
+
+        <!-- Breadcrumb -->
+        <div class="flex items-center gap-2 text-[13px] text-slate-500">
+          <i data-lucide="home" class="w-3.5 h-3.5"></i>
+          <span>Главная</span>
+          <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+          <span class="text-slate-900 font-medium">Центр аналитики</span>
+        </div>
+
+        <!-- Search -->
+        <div class="flex-1 max-w-md mx-auto">
+          <div class="relative">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+            <input type="text" placeholder="Поиск по системе..."
+              class="w-full pl-9 pr-16 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[13.5px] placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-100 transition-all">
+            <kbd class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-400 bg-white border border-slate-200 rounded px-1.5 py-0.5">⌘K</kbd>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-1">
+          <button class="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="Язык">
+            <span class="text-[12px] font-semibold">RU</span>
+          </button>
+          <button class="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="Уведомления">
+            <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
+            <span class="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
+          </button>
+          <div class="w-px h-6 bg-slate-200 mx-2"></div>
+
+          <!-- User menu -->
+          <button class="flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-lg hover:bg-slate-100 transition-colors">
+            <div class="w-7 h-7 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 text-white flex items-center justify-center text-[11px] font-semibold">АЕ</div>
+            <div class="text-left hidden sm:block">
+              <div class="text-[12.5px] font-semibold text-slate-900 leading-tight">Айдана Ермекова</div>
+              <div class="text-[11px] text-slate-500 leading-tight">Эксперт НИИС</div>
+            </div>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <main class="flex-1 overflow-y-auto scrollbar-thin p-6">
+        <div class="max-w-[1400px] mx-auto">
+
+          <!-- Page heading -->
+          <div class="flex items-start justify-between mb-6">
+            <div>
+              <h1 class="text-[22px] font-bold text-slate-900 tracking-tight">Центр аналитики</h1>
+              <p class="text-[13px] text-slate-500 mt-0.5">Сводные показатели системы «Чистые носители» за текущий период</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                Апрель 2026
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+              </button>
+              <button class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                Экспорт
+              </button>
+              <button class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[13px] font-medium transition-colors">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                Новая запись
+              </button>
+            </div>
+          </div>
+
+          <!-- Placeholder content area -->
+          <div class="bg-white border border-slate-200 rounded-xl p-12 flex flex-col items-center justify-center text-center">
+            <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-4">
+              <i data-lucide="bar-chart-3" class="w-6 h-6 text-slate-400"></i>
+            </div>
+            <div class="text-[14px] font-medium text-slate-700">Содержимое модуля</div>
+            <div class="text-[12.5px] text-slate-400 mt-1">Графики, KPI и детальная аналитика появятся здесь</div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    const sidebar = document.getElementById('sidebar');
+    const collapseBtn = document.getElementById('collapseBtn');
+    const collapseIcon = document.getElementById('collapseIcon');
+    const collapseLabel = collapseBtn.querySelector('.sidebar-label');
+    const collapseTooltip = collapseBtn.querySelector('.tooltip');
+
+    collapseBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      const collapsed = sidebar.classList.contains('collapsed');
+      collapseIcon.setAttribute('data-lucide', collapsed ? 'panel-left-open' : 'panel-left-close');
+      collapseLabel.textContent = collapsed ? 'Развернуть' : 'Свернуть';
+      collapseTooltip.textContent = collapsed ? 'Развернуть' : 'Свернуть';
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
