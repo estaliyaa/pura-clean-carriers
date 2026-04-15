@@ -277,7 +277,8 @@
         btnText.textContent = 'Успешно';
         btnSpinner.classList.add('hidden');
         btnIcon.classList.remove('hidden');
-        setTimeout(() => { alert('Вход как: ' + user.title + '\n(' + user.name + ')'); location.reload(); }, 500);
+        const routes = { niis_expert: 'expert/', niis_head: 'expert/', opcu: 'expert/', importer: 'expert/' };
+        setTimeout(() => { window.location.href = routes[user.role] || 'expert/'; }, 400);
       }, 900);
     });
   </script>
