@@ -4,8 +4,8 @@ function renderSidebar(active) {
     { id: 'import',    href: 'import-registry.html', icon: 'package-search',   label: 'Реестр импорта' },
     { id: 'payments',  href: 'payments.html',        icon: 'wallet',           label: 'Платежи' },
     { id: 'treaties',  href: 'treaties.html',        icon: 'file-signature',   label: 'Договоры' },
-    { id: 'reports',   href: '#',                    icon: 'file-bar-chart-2', label: 'Отчёты' },
-    { id: 'calc',      href: '#',                    icon: 'calculator',       label: 'Калькулятор' }
+    { id: 'reports',   href: 'reports.html',         icon: 'file-bar-chart-2', label: 'Отчёты' },
+    { id: 'calc',      href: 'calculator.html',      icon: 'calculator',       label: 'Калькулятор' }
   ];
 
   const html = `

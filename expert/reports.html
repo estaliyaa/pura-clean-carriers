@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TANBA — Отчёты</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } }
+  </script>
+  <link rel="stylesheet" href="shell.css">
+  <style>
+    .report-card { transition: all 0.2s; }
+    .report-card:hover { border-color: #c7d2fe; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08); transform: translateY(-1px); }
+
+    .src-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 999px; }
+    .src-auto  { background: #eef2ff; color: #4338ca; }
+    .src-okup  { background: #fef3c7; color: #92400e; }
+
+    .r-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 999px; }
+    .r-dot { width: 5px; height: 5px; border-radius: 50%; }
+    .r-ready     { background: #ecfdf5; color: #047857; } .r-ready .r-dot     { background: #10b981; }
+    .r-progress  { background: #eff6ff; color: #1d4ed8; } .r-progress .r-dot  { background: #3b82f6; }
+    .r-awaiting  { background: #fef3c7; color: #92400e; } .r-awaiting .r-dot  { background: #f59e0b; }
+    .r-sent      { background: #f5f3ff; color: #6d28d9; } .r-sent .r-dot      { background: #8b5cf6; }
+  </style>
+</head>
+<body class="font-sans bg-slate-50 min-h-screen flex">
+  <div id="sidebar-slot"></div>
+
+  <div id="mainArea" class="flex-1 ml-[260px] transition-all duration-250">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-20 h-16 flex items-center px-6 justify-between">
+      <div>
+        <div class="flex items-center gap-2 text-[12px] text-slate-400 mb-0.5">
+          <i data-lucide="home" class="w-3 h-3"></i><span>НИИС</span>
+          <i data-lucide="chevron-right" class="w-3 h-3"></i><span>Отчёты</span>
+        </div>
+        <h1 class="text-[17px] font-bold text-slate-900 leading-tight">Отчёты</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="relative hidden md:block">
+          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+          <input type="text" placeholder="Поиск..." class="w-64 pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[13px] placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100 transition-all">
+        </div>
+        <button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 relative">
+          <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
+          <span class="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
+        </button>
+        <span class="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700">
+          <i data-lucide="shield-check" class="w-3 h-3"></i> Эксперт НИИС
+        </span>
+      </div>
+    </header>
+
+    <main class="p-6">
+      <div class="flex items-start justify-between mb-5 fade-in">
+        <div>
+          <h2 class="text-[22px] font-bold text-slate-900 mb-1">Отчёты</h2>
+          <p class="text-[13.5px] text-slate-500">Автоматическая генерация приложений №3, №4, №7 и получение №5, №6 от ОКУП</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[13px] font-medium text-slate-700 hover:bg-slate-50">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Q1 2026
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+          </button>
+          <button class="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[13px] font-medium transition-colors">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Сгенерировать все
+          </button>
+        </div>
+      </div>
+
+      <!-- Report cards -->
+      <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 fade-in">
+
+        <!-- App 3 -->
+        <div class="report-card bg-white rounded-2xl border border-slate-200 p-5 flex flex-col">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center"><i data-lucide="file-text" class="w-5 h-5"></i></div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h3 class="text-[14px] font-bold text-slate-900">Приложение №3</h3>
+                  <span class="src-chip src-auto"><i data-lucide="cpu" class="w-2.5 h-2.5"></i> Авто</span>
+                </div>
+                <p class="text-[11.5px] text-slate-500 mt-0.5">Реестр импортёров и начислений</p>
+              </div>
+            </div>
+            <span class="r-chip r-ready"><span class="r-dot"></span> Готов</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mb-3 text-[11.5px]">
+            <div class="bg-slate-50 rounded-lg px-3 py-2">
+              <div class="text-slate-400 text-[10.5px]">Период</div>
+              <div class="font-semibold text-slate-900">Q1 2026</div>
+            </div>
+            <div class="bg-slate-50 rounded-lg px-3 py-2">
+              <div class="text-slate-400 text-[10.5px]">Сгенерирован</div>
+              <div class="font-semibold text-slate-900">14.04.2026</div>
+            </div>
+          </div>
+          <p class="text-[11.5px] text-slate-500 mb-4 leading-snug">Содержит 312 импортёров, 1 248 деклараций, общая сумма вознаграждения 423.2 млн ₸.</p>
+          <div class="mt-auto flex items-center gap-1">
+            <button class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-rose-50 text-rose-700 rounded-lg text-[11.5px] font-medium hover:bg-rose-100"><i data-lucide="file-down" class="w-3.5 h-3.5"></i> PDF</button>
+            <button class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-[11.5px] font-medium hover:bg-emerald-100"><i data-lucide="sheet" class="w-3.5 h-3.5"></i> XLSX</button>
+            <button onclick="openEmail('Приложение №3 — Q1 2026')" class="flex items-center justify-center w-9 h-8 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200" title="Отправить на email"><i data-lucide="send" class="w-3.5 h-3.5"></i></button>
+          </div>
+        </div>
+
+        <!-- App 4 -->
+        <div class="report-card bg-white rounded-2xl border border-slate-200 p-5 flex flex-col">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 text-white flex items-center justify-center"><i data-lucide="file-spreadsheet" class="w-5 h-5"></i></div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h3 class="text-[14px] font-bold text-slate-900">Приложение №4</h3>
+                  <span class="src-chip src-auto"><i data-lucide="cpu" class="w-2.5 h-2.5"></i> Авто</span>
+                </div>
+                <p class="text-[11.5px] text-slate-500 mt-0.5">Распределение средств по ОКУП</p>
+              </div>
+            </div>
+            <span class="r-chip r-ready"><span class="r-dot"></span> Готов</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mb-3 text-[11.5px]">
+            <div class="bg-slate-50 rounded-lg px-3 py-2">
+              <div class="text-slate-400 text-[10.5px]">Период</div>
+              <div class="font-semibold text-slate-900">Q1 2026</div>
+            </div>
+            <div class="bg-slate-50 rounded-lg px-3 py-2">
+              <div class="text-slate-400 text-[10.5px]">Сгенерирован</div>
+              <div class="font-semibold text-slate-900">14.04.2026</div>
+            </div>
+          </div>
+          <p class="text-[11.5px] text-slate-500 mb-4 leading-snug">Распределение 420 млн ₸ между 7 ОКУП согласно долям в реестре правообладателей.</p>
+          <div class="mt-auto flex items-center gap-1">
+            <button class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-rose-50 text-rose-700 rounded-lg text-[11.5px] font-medium hover:bg-rose-100"><i data-lucide="file-down" class="w-3.5 h-3.5"></i> PDF</button>
+            <button class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-[11.5px] font-medium hover:bg-emerald-100"><i data-lucide="sheet" class="w-3.5 h-3.5"></i> XLSX</button>
+            <button onclick="openEmail('Приложение №4 — Q1 2026')" class="flex items-center justify-center w-9 h-8 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"><i data-lucide="send" class="w-3.5 h-3.5"></i></button>
+          </div>
+        </div>
+
+        <!-- App 7 -->
+        <div class="report-card bg-white rounded-2xl border border-slate-200 p-5 flex flex-col">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center"><i data-lucide="file-check-2" class="w-5 h-5"></i></div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h3 class="text-[14px] font-bold text-slate-900">Приложение №7</h3>
+                  <span class="src-chip src-auto"><i data-lucide="cpu" class="w-2.5 h-2.5"></i> Авто</span>
+                </div>
+                <p class="text-[11.5px] text-slate-500 mt-0.5">Сводный отчёт по освоению</p>
+              </div>
+            </div>
+            <span class="r-chip r-progress"><span class="r-dot"></span> Формируется</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mb-3 text-[11.5px]">
+            <div class="bg-slate-50 rounded-lg px-3 py-2">
+              <div class="text-slate-400 text-[10.5px]">Период</div>
+              <div class="font-semibold text-slate-900">Q1 2026</div>
+            </div>
+            <div class="bg-slate-50 rounded-lg px-3 py-2">
+              <div class="text-slate-400 text-[10.5px]">Прогресс</div>
+              <div class="font-semibold text-slate-900">72%</div>
+            </div>
+          </div>
+          <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-3">
+            <div class="h-full bg-blue-500 rounded-full" style="width: 72%"></div>
+          </div>
+          <p class="text-[11.5px] text-slate-500 mb-4 leading-snug">Ожидаем завершения сверки с 1С. Готовность приблизительно через 2 часа.</p>
+          <div class="mt-auto flex items-center gap-1 opacity-50 pointer-events-none">
+            <button class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-[11.5px] font-medium"><i data-lucide="file-down" class="w-3.5 h-3.5"></i> PDF</button>
+            <button class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-[11.5px] font-medium"><i data-lucide="sheet" class="w-3.5 h-3.5"></i> XLSX</button>
+            <button class="flex items-center justify-center w-9 h-8 bg-slate-100 text-slate-500 rounded-lg"><i data-lucide="send" class="w-3.5 h-3.5"></i></button>
+          </div>
+        </div>
+
+        <!-- App 5 (from OKUP) -->
+        <div class="report-card bg-white rounded-2xl border border-slate-200 p-5 flex flex-col">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center"><i data-lucide="file-input" class="w-5 h-5"></i></div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h3 class="text-[14px] font-bold text-slate-900">Приложение №5</h3>
+                  <span class="src-chip src-okup"><i data-lucide="landmark" class="w-2.5 h-2.5"></i> От ОКУП</span>
+                </div>
+                <p class="text-[11.5px] text-slate-500 mt-0.5">Отчёт о выплатах правообладателям</p>
+              </div>
+            </div>
+            <span class="r-chip r-awaiting"><span class="r-dot"></span> Ожидание</span>
+          </div>
+          <div class="space-y-1.5 mb-4">
+            <div class="flex items-center justify-between text-[11.5px]">
+              <div class="flex items-center gap-2 text-slate-700"><span class="w-5 h-5 rounded bg-indigo-100 text-indigo-700 flex items-center justify-center text-[9px] font-bold">КАО</span>Казахстанское авторское общество</div>
+              <span class="r-chip r-ready"><span class="r-dot"></span> Получено</span>
+            </div>
+            <div class="flex items-center justify-between text-[11.5px]">
+              <div class="flex items-center gap-2 text-slate-700"><span class="w-5 h-5 rounded bg-sky-100 text-sky-700 flex items-center justify-center text-[9px] font-bold">АА</span>Аманат-Авторы</div>
+              <span class="r-chip r-ready"><span class="r-dot"></span> Получено</span>
+            </div>
+            <div class="flex items-center justify-between text-[11.5px]">
+              <div class="flex items-center gap-2 text-slate-700"><span class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center text-[9px] font-bold">АБ</span>Абай-Авторлық</div>
+              <span class="r-chip r-awaiting"><span class="r-dot"></span> Ожидание</span>
+            </div>
+            <div class="flex items-center justify-between text-[11.5px]">
+              <div class="flex items-center gap-2 text-slate-700"><span class="w-5 h-5 rounded bg-amber-100 text-amber-700 flex items-center justify-center text-[9px] font-bold">ҚК</span>Қазақ Композитор</div>
+              <span class="r-chip r-awaiting"><span class="r-dot"></span> Ожидание</span>
+            </div>
+          </div>
+          <div class="mt-auto flex items-center gap-1">
+            <button class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-[11.5px] font-medium hover:bg-indigo-100"><i data-lucide="eye" class="w-3.5 h-3.5"></i> Просмотр</button>
+            <button class="flex items-center justify-center w-9 h-8 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"><i data-lucide="bell" class="w-3.5 h-3.5"></i></button>
+          </div>
+        </div>
+
+        <!-- App 6 (from OKUP) -->
+        <div class="report-card bg-white rounded-2xl border border-slate-200 p-5 flex flex-col">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white flex items-center justify-center"><i data-lucide="file-input" class="w-5 h-5"></i></div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h3 class="text-[14px] font-bold text-slate-900">Приложение №6</h3>
+                  <span class="src-chip src-okup"><i data-lucide="landmark" class="w-2.5 h-2.5"></i> От ОКУП</span>
+                </div>
+                <p class="text-[11.5px] text-slate-500 mt-0.5">Отчёт об удержаниях ОКУП</p>
+              </div>
+            </div>
+            <span class="r-chip r-ready"><span class="r-dot"></span> Получен</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mb-3 text-[11.5px]">
+            <div class="bg-slate-50 rounded-lg px-3 py-2">
+              <div class="text-slate-400 text-[10.5px]">Загружен</div>
+              <div class="font-semibold text-slate-900">12.04.2026</div>
+            </div>
+            <div class="bg-slate-50 rounded-lg px-3 py-2">
+              <div class="text-slate-400 text-[10.5px]">От ОКУП</div>
+              <div class="font-semibold text-slate-900">6 из 7</div>
+            </div>
+          </div>
+          <p class="text-[11.5px] text-slate-500 mb-4 leading-snug">Общее удержание 17.8 млн ₸. Ожидаем отчёт от «Литературные авторы».</p>
+          <div class="mt-auto flex items-center gap-1">
+            <button class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-rose-50 text-rose-700 rounded-lg text-[11.5px] font-medium hover:bg-rose-100"><i data-lucide="file-down" class="w-3.5 h-3.5"></i> PDF</button>
+            <button class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-[11.5px] font-medium hover:bg-emerald-100"><i data-lucide="sheet" class="w-3.5 h-3.5"></i> XLSX</button>
+            <button onclick="openEmail('Приложение №6 — Q1 2026')" class="flex items-center justify-center w-9 h-8 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200"><i data-lucide="send" class="w-3.5 h-3.5"></i></button>
+          </div>
+        </div>
+
+        <!-- Upload card for new OKUP report -->
+        <div class="rounded-2xl border-2 border-dashed border-slate-200 p-5 flex flex-col items-center justify-center text-center hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors cursor-pointer min-h-[280px]">
+          <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center mb-3"><i data-lucide="upload-cloud" class="w-5 h-5"></i></div>
+          <h3 class="text-[14px] font-bold text-slate-900 mb-1">Загрузить отчёт от ОКУП</h3>
+          <p class="text-[11.5px] text-slate-500 mb-3">Приложения №5 или №6 · PDF / XLSX до 20 МБ</p>
+          <button class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[12px] font-medium text-slate-700 hover:bg-slate-50"><i data-lucide="file-plus" class="w-3.5 h-3.5"></i> Выбрать файл</button>
+        </div>
+      </section>
+
+      <!-- History -->
+      <section class="bg-white rounded-2xl border border-slate-200 overflow-hidden fade-in">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center"><i data-lucide="history" class="w-[18px] h-[18px]"></i></div>
+            <div>
+              <h3 class="text-[15px] font-bold text-slate-900">История отчётов</h3>
+              <p class="text-[11.5px] text-slate-500">Все сгенерированные и полученные отчёты</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="relative">
+              <i data-lucide="search" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"></i>
+              <input type="text" placeholder="Поиск..." class="w-48 pl-8 pr-3 py-1.5 text-[12.5px] bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100">
+            </div>
+            <button class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[12.5px] font-medium text-slate-700 hover:bg-slate-50"><i data-lucide="filter" class="w-3.5 h-3.5"></i> Фильтр</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto scrollbar-thin">
+          <table class="w-full text-[13px]">
+            <thead>
+              <tr class="bg-slate-50/60 text-[10.5px] font-semibold text-slate-500 uppercase tracking-wider">
+                <th class="text-left px-5 py-3">Отчёт</th>
+                <th class="text-left px-3 py-3">Период</th>
+                <th class="text-left px-3 py-3">Источник</th>
+                <th class="text-left px-3 py-3">Дата</th>
+                <th class="text-left px-3 py-3">Автор</th>
+                <th class="text-left px-3 py-3">Статус</th>
+                <th class="text-right px-4 py-3">Действие</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100" id="histTbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ═══ EMAIL MODAL ═══ -->
+  <div id="emailModal" class="hidden fixed inset-0 z-50 items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeEmail()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+      <div class="flex items-start justify-between px-5 py-4 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center"><i data-lucide="send" class="w-5 h-5"></i></div>
+          <div>
+            <h3 class="text-[15px] font-bold text-slate-900">Отправить отчёт</h3>
+            <p id="emSub" class="text-[11.5px] text-slate-500"></p>
+          </div>
+        </div>
+        <button onclick="closeEmail()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-5 space-y-4">
+        <div>
+          <label class="block text-[12px] font-medium text-slate-700 mb-1.5">Получатели</label>
+          <div class="flex items-center flex-wrap gap-1.5 bg-white border border-slate-200 rounded-lg p-2 min-h-[40px]">
+            <span class="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-[12px] font-medium px-2 py-1 rounded-md">director@niis.kz <button class="hover:text-indigo-900"><i data-lucide="x" class="w-3 h-3"></i></button></span>
+            <span class="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-[12px] font-medium px-2 py-1 rounded-md">audit@niis.kz <button class="hover:text-indigo-900"><i data-lucide="x" class="w-3 h-3"></i></button></span>
+            <input type="text" placeholder="Добавить email..." class="flex-1 min-w-[120px] text-[12.5px] focus:outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-[12px] font-medium text-slate-700 mb-1.5">Тема</label>
+          <input id="emTopic" type="text" class="w-full px-3 py-2 text-[13px] bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100">
+        </div>
+        <div>
+          <label class="block text-[12px] font-medium text-slate-700 mb-1.5">Сообщение</label>
+          <textarea rows="4" class="w-full px-3 py-2 text-[13px] bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 resize-none">Добрый день! Направляю сгенерированный отчёт за указанный период. С уважением, Эксперт НИИС.</textarea>
+        </div>
+        <div>
+          <label class="block text-[12px] font-medium text-slate-700 mb-1.5">Вложения</label>
+          <div class="space-y-1.5">
+            <label class="flex items-center gap-2 p-2.5 bg-slate-50 rounded-lg cursor-pointer">
+              <input type="checkbox" checked class="rounded border-slate-300 accent-indigo-600">
+              <div class="w-7 h-7 rounded bg-rose-100 text-rose-700 flex items-center justify-center"><i data-lucide="file-text" class="w-3.5 h-3.5"></i></div>
+              <div class="flex-1"><div class="text-[12px] font-medium text-slate-900">report.pdf</div><div class="text-[10.5px] text-slate-500">2.4 МБ</div></div>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 bg-slate-50 rounded-lg cursor-pointer">
+              <input type="checkbox" checked class="rounded border-slate-300 accent-indigo-600">
+              <div class="w-7 h-7 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center"><i data-lucide="sheet" class="w-3.5 h-3.5"></i></div>
+              <div class="flex-1"><div class="text-[12px] font-medium text-slate-900">report.xlsx</div><div class="text-[10.5px] text-slate-500">186 КБ</div></div>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="px-5 py-3 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50/50">
+        <button onclick="closeEmail()" class="px-4 py-2 text-[13px] font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">Отмена</button>
+        <button class="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-medium rounded-lg transition-colors">
+          <i data-lucide="send" class="w-3.5 h-3.5"></i> Отправить
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="shell.js"></script>
+  <script>
+    renderSidebar('reports');
+
+    const HIST = [
+      { name: 'Приложение №3', period: 'Q1 2026',    src: 'auto', srcLabel: 'Авто',       date: '14.04.2026 11:42', author: 'Айдана Ермекова', status: 'ready',   formats: ['pdf','xlsx'] },
+      { name: 'Приложение №4', period: 'Q1 2026',    src: 'auto', srcLabel: 'Авто',       date: '14.04.2026 11:42', author: 'Айдана Ермекова', status: 'ready',   formats: ['pdf','xlsx'] },
+      { name: 'Приложение №6', period: 'Q1 2026',    src: 'okup', srcLabel: 'От ОКУП',    date: '12.04.2026 09:15', author: 'ОКУП КАО',        status: 'ready',   formats: ['pdf','xlsx'] },
+      { name: 'Приложение №5', period: 'Q1 2026',    src: 'okup', srcLabel: 'От ОКУП',    date: '12.04.2026 09:15', author: 'ОКУП КАО',        status: 'ready',   formats: ['pdf'] },
+      { name: 'Приложение №3', period: 'Q4 2025',    src: 'auto', srcLabel: 'Авто',       date: '15.01.2026 16:03', author: 'Айдана Ермекова', status: 'sent',    formats: ['pdf','xlsx'] },
+      { name: 'Приложение №7', period: 'Q4 2025',    src: 'auto', srcLabel: 'Авто',       date: '15.01.2026 16:03', author: 'Айдана Ермекова', status: 'sent',    formats: ['pdf','xlsx'] },
+      { name: 'Приложение №6', period: 'Q4 2025',    src: 'okup', srcLabel: 'От ОКУП',    date: '10.01.2026 14:22', author: 'ОКУП АА',         status: 'ready',   formats: ['pdf'] },
+      { name: 'Приложение №4', period: 'Q4 2025',    src: 'auto', srcLabel: 'Авто',       date: '15.01.2026 16:03', author: 'Айдана Ермекова', status: 'sent',    formats: ['pdf','xlsx'] }
+    ];
+    const STAT = {
+      ready:    { label: 'Готов',        cls: 'r-chip r-ready' },
+      progress: { label: 'Формируется', cls: 'r-chip r-progress' },
+      awaiting: { label: 'Ожидание',    cls: 'r-chip r-awaiting' },
+      sent:     { label: 'Отправлен',    cls: 'r-chip r-sent' }
+    };
+
+    const tbody = document.getElementById('histTbody');
+    HIST.forEach(h => {
+      const s = STAT[h.status];
+      const srcCls = h.src === 'auto' ? 'src-auto' : 'src-okup';
+      const srcIcon = h.src === 'auto' ? 'cpu' : 'landmark';
+      const formatBtns = h.formats.map(f => f === 'pdf'
+        ? '<button class="w-7 h-7 rounded-md bg-rose-50 text-rose-700 hover:bg-rose-100 flex items-center justify-center" title="PDF"><i data-lucide="file-text" class="w-3.5 h-3.5"></i></button>'
+        : '<button class="w-7 h-7 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center justify-center" title="XLSX"><i data-lucide="sheet" class="w-3.5 h-3.5"></i></button>'
+      ).join('');
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr class="hover:bg-slate-50/60">
+          <td class="px-5 py-3 font-medium text-slate-900">${h.name}</td>
+          <td class="px-3 py-3 text-slate-700">${h.period}</td>
+          <td class="px-3 py-3"><span class="src-chip ${srcCls}"><i data-lucide="${srcIcon}" class="w-2.5 h-2.5"></i> ${h.srcLabel}</span></td>
+          <td class="px-3 py-3 text-slate-700 whitespace-nowrap">${h.date}</td>
+          <td class="px-3 py-3 text-slate-700">${h.author}</td>
+          <td class="px-3 py-3"><span class="${s.cls}"><span class="r-dot"></span> ${s.label}</span></td>
+          <td class="px-4 py-3 text-right">
+            <div class="inline-flex items-center gap-1">
+              ${formatBtns}
+              <button class="w-7 h-7 rounded-md hover:bg-slate-100 flex items-center justify-center text-slate-600" onclick="openEmail('${h.name} — ${h.period}')"><i data-lucide="send" class="w-3.5 h-3.5"></i></button>
+              <button class="w-7 h-7 rounded-md hover:bg-slate-100 flex items-center justify-center text-slate-500"><i data-lucide="more-horizontal" class="w-3.5 h-3.5"></i></button>
+            </div>
+          </td>
+        </tr>
+      `);
+    });
+    lucide.createIcons();
+
+    // Email modal
+    function openEmail(subj) {
+      document.getElementById('emSub').textContent = subj;
+      document.getElementById('emTopic').value = 'TANBA · ' + subj;
+      const m = document.getElementById('emailModal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+      lucide.createIcons();
+    }
+    function closeEmail() {
+      const m = document.getElementById('emailModal');
+      m.classList.add('hidden'); m.classList.remove('flex');
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEmail(); });
+  </script>
+</body>
+</html>
